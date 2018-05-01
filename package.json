@@ -19,5 +19,8 @@
   },
   "keywords": [
     "radius"
-  ]
+  ],
+  "dependencies": {
+    "lodash": "^4.17.10"
+  }
 }

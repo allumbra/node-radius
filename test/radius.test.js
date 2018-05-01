@@ -2,31 +2,33 @@ var testCase = require('nodeunit').testCase;
 var radius = require('../lib/radius');
 var fs = require('fs');
 var crypto = require('crypto');
+var _ = require('lodash');
+var util = require('../lib/util');
 
 var secret;
 
 var test_args = {};
 
 module.exports = testCase({
-  setUp: function(callback) {
+  setUp: function (callback) {
     secret = "nearbuy";
     callback();
   },
-  tearDown: function(callback) {
+  tearDown: function (callback) {
     radius.unload_dictionaries();
     callback();
   },
 
-  test_decode_mac_auth: function(test) {
+  test_decode_mac_auth: function (test) {
     var raw_packet = fs.readFileSync(__dirname + '/captures/aruba_mac_auth.packet');
 
     radius.load_dictionary(__dirname + '/dictionaries/dictionary.aruba');
 
     var decoded = radius.decode({ packet: raw_packet, secret: secret });
 
-    test.equal( decoded.code, 'Access-Request' );
-    test.equal( decoded.identifier, 58 );
-    test.equal( decoded.length, 208 );
+    test.equal(decoded.code, 'Access-Request');
+    test.equal(decoded.identifier, 58);
+    test.equal(decoded.length, 208);
 
     var expected_attrs = {
       'NAS-IP-Address': '10.0.0.90',
@@ -45,21 +47,21 @@ module.exports = testCase({
       },
       'Message-Authenticator': new Buffer('f8a12329c7ed5a6e2568515243efb918', 'hex')
     };
-    test.deepEqual( decoded.attributes, expected_attrs );
+    test.deepEqual(decoded.attributes, expected_attrs);
 
     test.done();
   },
 
-  test_decode_mac_auth_without_secret: function(test) {
+  test_decode_mac_auth_without_secret: function (test) {
     var raw_packet = fs.readFileSync(__dirname + '/captures/aruba_mac_auth.packet');
 
     radius.load_dictionary(__dirname + '/dictionaries/dictionary.aruba');
 
     var decoded = radius.decode_without_secret({ packet: raw_packet });
 
-    test.equal( decoded.code, 'Access-Request' );
-    test.equal( decoded.identifier, 58 );
-    test.equal( decoded.length, 208 );
+    test.equal(decoded.code, 'Access-Request');
+    test.equal(decoded.identifier, 58);
+    test.equal(decoded.length, 208);
 
     var expected_attrs = {
       'NAS-IP-Address': '10.0.0.90',
@@ -78,7 +80,7 @@ module.exports = testCase({
       },
       'Message-Authenticator': new Buffer('f8a12329c7ed5a6e2568515243efb918', 'hex')
     };
-    test.deepEqual( decoded.attributes, expected_attrs );
+    test.deepEqual(decoded.attributes, expected_attrs);
 
     decoded = radius.decode({
       secret: secret,
@@ -92,27 +94,27 @@ module.exports = testCase({
       })
     });
 
-    test.equal( decoded.attributes['User-Password'], 'barratry-Wertherism' );
+    test.equal(decoded.attributes['User-Password'], 'barratry-Wertherism');
 
     test.done();
   },
 
   // make sure everthing is fine with no dictionaries
-  test_decode_no_dicts: function(test) {
+  test_decode_no_dicts: function (test) {
     var raw_packet = fs.readFileSync(__dirname + '/captures/aruba_mac_auth.packet');
 
     radius.unload_dictionaries();
     var orig_load = radius.load_dictionary;
-    radius.load_dictionary = function() { };
+    radius.load_dictionary = function () { };
 
     var decoded = radius.decode({ packet: raw_packet, secret: secret });
 
-    test.equal( decoded.code, 'Access-Request' );
-    test.equal( decoded.identifier, 58 );
-    test.equal( decoded.length, 208 );
+    test.equal(decoded.code, 'Access-Request');
+    test.equal(decoded.identifier, 58);
+    test.equal(decoded.length, 208);
 
     // no pretty attributes
-    test.deepEqual( decoded.attributes, {} );
+    test.deepEqual(decoded.attributes, {});
 
     var expected_raw_attrs = [
       [4, new Buffer([10, 0, 0, 90])],
@@ -129,7 +131,7 @@ module.exports = testCase({
       [80, new Buffer('f8a12329c7ed5a6e2568515243efb918', 'hex')]
     ];
 
-    test.deepEqual( decoded.raw_attributes, expected_raw_attrs );
+    test.deepEqual(decoded.raw_attributes, expected_raw_attrs);
 
     radius.load_dictionary = orig_load;
 
@@ -137,7 +139,7 @@ module.exports = testCase({
   },
 
   // can make a "naked" packet
-  test_encode_access_request: function(test) {
+  test_encode_access_request: function (test) {
     radius.load_dictionary(__dirname + '/dictionaries/dictionary.aruba');
 
     var attributes = [
@@ -160,8 +162,8 @@ module.exports = testCase({
     });
 
     var decoded = radius.decode({ packet: packet, secret: secret });
-    test.equal( decoded.code, 'Access-Request' );
-    test.equal( decoded.identifier, 123 );
+    test.equal(decoded.code, 'Access-Request');
+    test.equal(decoded.identifier, 123);
 
     var expected_attrs = {
       'User-Name': 'ornithopter-aliptic',
@@ -175,12 +177,12 @@ module.exports = testCase({
         'Aruba-Essid-Name': 'phene-dentinalgia'
       }
     };
-    test.deepEqual( decoded.attributes, expected_attrs );
+    test.deepEqual(decoded.attributes, expected_attrs);
 
     test.done();
   },
 
-  test_decode_hash_attributes: function(test) {
+  test_decode_hash_attributes: function (test) {
     var attrs = {
       'User-Name': 'ornithopter-aliptic',
       'User-Password': 'nucleohistone-overwilily',
@@ -195,14 +197,14 @@ module.exports = testCase({
     });
 
     var decoded = radius.decode({ packet: packet, secret: secret });
-    test.equal( decoded.code, 'Access-Request' );
-    test.equal( decoded.identifier, 123 );
-    test.deepEqual( decoded.attributes, attrs );
+    test.equal(decoded.code, 'Access-Request');
+    test.equal(decoded.identifier, 123);
+    test.deepEqual(decoded.attributes, attrs);
 
     test.done();
   },
 
-  test_throws_on_nested_hash_attributes: function(test) {
+  test_throws_on_nested_hash_attributes: function (test) {
     var attrs = {
       'User-Name': 'ornithopter-aliptic',
       'User-Password': 'nucleohistone-overwilily',
@@ -215,7 +217,7 @@ module.exports = testCase({
       }
     };
 
-    test.throws(function() {
+    test.throws(function () {
       var packet = radius.encode({
         code: 'Access-Request',
         identifier: 123,
@@ -228,7 +230,7 @@ module.exports = testCase({
 
   // test that our encoded packet matches bit-for-bit with a "real"
   // RADIUS packet
-  test_encode_bit_for_bit: function(test) {
+  test_encode_bit_for_bit: function (test) {
     var raw_packet = fs.readFileSync(__dirname + '/captures/aruba_mac_auth.packet');
 
     radius.load_dictionary(__dirname + '/dictionaries/dictionary.aruba');
@@ -254,13 +256,13 @@ module.exports = testCase({
       add_message_authenticator: true
     });
 
-    test.equal( encoded.toString('hex'), raw_packet.toString('hex') );
+    test.equal(encoded.toString('hex'), raw_packet.toString('hex'));
 
     test.done();
   },
 
   // encode will choose a random identifier for you if you don't provide one
-  test_encode_random_identifer: function(test) {
+  test_encode_random_identifer: function (test) {
     var decoded = radius.decode({
       packet: radius.encode({
         code: 'Access-Request',
@@ -268,7 +270,7 @@ module.exports = testCase({
       }),
       secret: secret
     });
-    test.ok( decoded.identifier >= 0 && decoded.identifier < 256 );
+    test.ok(decoded.identifier >= 0 && decoded.identifier < 256);
 
     var starting_id = decoded.identifier;
 
@@ -285,13 +287,13 @@ module.exports = testCase({
         break;
     }
 
-    test.ok( true );
+    test.ok(true);
 
     test.done();
   },
 
   // given a previously decoded packet, prepare a response packet
-  test_packet_response: function(test) {
+  test_packet_response: function (test) {
     var raw_packet = fs.readFileSync(__dirname + '/captures/cisco_mac_auth.packet');
 
     var decoded = radius.decode({ packet: raw_packet, secret: secret });
@@ -303,13 +305,13 @@ module.exports = testCase({
     });
 
     var raw_response = fs.readFileSync(__dirname + '/captures/cisco_mac_auth_reject.packet');
-    test.equal( response.toString('hex'), raw_response.toString('hex') );
+    test.equal(response.toString('hex'), raw_response.toString('hex'));
 
     test.done();
   },
 
   // response needs to include proxy state
-  test_response_include_proxy_state: function(test) {
+  test_response_include_proxy_state: function (test) {
     var request_with_proxy = radius.decode({
       packet: radius.encode({
         code: 'Access-Request',
@@ -338,13 +340,13 @@ module.exports = testCase({
       [radius.attr_name_to_id('Proxy-State'), new Buffer('regretfully-unstability')]
     ];
 
-    test.deepEqual( decoded_response.raw_attributes, expected_raw_attributes );
+    test.deepEqual(decoded_response.raw_attributes, expected_raw_attributes);
 
     test.done();
   },
 
   // dont accidentally strip null bytes when encoding
-  test_password_encode: function(test) {
+  test_password_encode: function (test) {
     var decoded = radius.decode({
       packet: radius.encode({
         code: 'Access-Request',
@@ -355,21 +357,21 @@ module.exports = testCase({
       secret: secret
     });
 
-    test.equal( decoded.attributes['User-Password'], 'ridiculous' );
+    test.equal(decoded.attributes['User-Password'], 'ridiculous');
 
     test.done();
   },
 
   accounting_group: {
-    setUp: function(cb) {
+    setUp: function (cb) {
       radius.load_dictionary(__dirname + '/dictionaries/dictionary.airespace');
 
       test_args = {};
       test_args.raw_acct_request = fs.readFileSync(__dirname + '/captures/cisco_accounting.packet');
       test_args.expected_acct_attrs = {
         'User-Name': 'user_7C:C5:37:FF:F8:AF_134',
-	      'NAS-Port': 1,
-	      'NAS-IP-Address': '10.0.3.4',
+        'NAS-Port': 1,
+        'NAS-IP-Address': '10.0.3.4',
         'Framed-IP-Address': '10.2.0.252',
         'NAS-Identifier': 'Cisco 4400 (Anchor)',
         'Vendor-Specific': {
@@ -388,13 +390,13 @@ module.exports = testCase({
       cb();
     },
 
-    test_accounting: function(test) {
+    test_accounting: function (test) {
       var raw_acct_request = test_args.raw_acct_request;
       var decoded = radius.decode({ packet: raw_acct_request, secret: secret });
 
       var expected_attrs = test_args.expected_acct_attrs;
 
-      test.deepEqual( decoded.attributes, expected_attrs );
+      test.deepEqual(decoded.attributes, expected_attrs);
 
       // test we can encode the same packet
       var encoded = radius.encode({
@@ -402,9 +404,9 @@ module.exports = testCase({
         identifier: decoded.identifier,
         secret: secret,
         attributes: [
-       	  ['User-Name', 'user_7C:C5:37:FF:F8:AF_134'],
-	        ['NAS-Port', 1],
-	        ['NAS-IP-Address', '10.0.3.4'],
+          ['User-Name', 'user_7C:C5:37:FF:F8:AF_134'],
+          ['NAS-Port', 1],
+          ['NAS-IP-Address', '10.0.3.4'],
           ['Framed-IP-Address', '10.2.0.252'],
           ['NAS-Identifier', 'Cisco 4400 (Anchor)'],
           ['Vendor-Specific', 'Airespace', [['Airespace-Wlan-Id', 2]]],
@@ -418,40 +420,40 @@ module.exports = testCase({
           ['Called-Station-Id', '00:22:55:90:39:60']
         ]
       });
-      test.equal( encoded.toString('hex'), raw_acct_request.toString('hex') );
+      test.equal(encoded.toString('hex'), raw_acct_request.toString('hex'));
 
       var raw_acct_response = fs.readFileSync(__dirname +
-                                              '/captures/cisco_accounting_response.packet');
+        '/captures/cisco_accounting_response.packet');
       encoded = radius.encode_response({
         packet: decoded,
         secret: secret,
         code: 'Accounting-Response'
       });
-      test.equal( encoded.toString('hex'), raw_acct_response.toString('hex') );
+      test.equal(encoded.toString('hex'), raw_acct_response.toString('hex'));
 
       test.done();
     },
 
-    test_invalid_accounting_packet_authenticator: function(test) {
+    test_invalid_accounting_packet_authenticator: function (test) {
       var raw_acct_request = test_args.raw_acct_request;
       var expected_attrs = test_args.expected_acct_attrs;
       expected_attrs['Vendor-Specific'].vendors = { '14179': '14179' };
 
       // detect invalid accounting packets
-      test.throws( function() {
+      test.throws(function () {
         radius.decode({ packet: raw_acct_request, secret: 'not-secret' });
-      } );
+      });
 
       try {
         radius.decode({ packet: raw_acct_request, secret: 'not-secret' });
       } catch (err) {
-        test.deepEqual( err.decoded.attributes, expected_attrs );
+        test.deepEqual(err.decoded.attributes, expected_attrs);
       }
       test.done();
     }
   },
 
-  test_no_empty_strings: function(test) {
+  test_no_empty_strings: function (test) {
     var decoded = radius.decode({
       secret: secret,
       packet: radius.encode({
@@ -462,12 +464,12 @@ module.exports = testCase({
     });
 
     // don't send empty strings (see RFC2865)
-    test.deepEqual( decoded.attributes, {} );
+    test.deepEqual(decoded.attributes, {});
 
     test.done();
   },
 
-  test_repeated_attribute: function(test) {
+  test_repeated_attribute: function (test) {
     var decoded = radius.decode({
       secret: secret,
       packet: radius.encode({
@@ -483,7 +485,7 @@ module.exports = testCase({
     var expected_attrs = {
       'Reply-Message': ['message one', 'message two']
     };
-    test.deepEqual( decoded.attributes, expected_attrs );
+    test.deepEqual(decoded.attributes, expected_attrs);
 
     test.done();
   },
@@ -511,7 +513,7 @@ module.exports = testCase({
   // },
 
   // make sure we can load the dicts in any order
-  test_dictionary_out_of_order: function(test) {
+  test_dictionary_out_of_order: function (test) {
     var dicts = fs.readdirSync(__dirname + '/../dictionaries');
 
     // make sure we can load any dictionary first
@@ -536,7 +538,7 @@ module.exports = testCase({
       })
     });
 
-    test.equal( decoded.attributes['Acct-Status-Type'], 'Tunnel-Reject' );
+    test.equal(decoded.attributes['Acct-Status-Type'], 'Tunnel-Reject');
 
     radius.unload_dictionaries();
     radius.load_dictionary(__dirname + '/dictionaries/dictionary.test_tunnel_type');
@@ -553,13 +555,13 @@ module.exports = testCase({
       })
     });
 
-    var expected_attrs = {'Tunnel-Type': [0x00, 'TESTTUNNEL']};
-    test.deepEqual( decoded.attributes, expected_attrs );
+    var expected_attrs = { 'Tunnel-Type': [0x00, 'TESTTUNNEL'] };
+    test.deepEqual(decoded.attributes, expected_attrs);
 
     test.done();
   },
 
-  test_zero_identifer: function(test) {
+  test_zero_identifer: function (test) {
     var decoded = radius.decode({
       packet: radius.encode({
         secret: secret,
@@ -569,11 +571,11 @@ module.exports = testCase({
       secret: secret
     });
 
-    test.equal( decoded.identifier, 0 );
+    test.equal(decoded.identifier, 0);
     test.done();
   },
 
-  test_date_type: function(test) {
+  test_date_type: function (test) {
     var raw_packet = fs.readFileSync(__dirname + '/captures/motorola_accounting.packet');
 
     var decoded = radius.decode({
@@ -583,7 +585,7 @@ module.exports = testCase({
 
     var epoch = 1349879753;
 
-    test.equal( decoded.attributes['Event-Timestamp'].getTime(), epoch * 1000 );
+    test.equal(decoded.attributes['Event-Timestamp'].getTime(), epoch * 1000);
 
     var encoded = radius.encode({
       code: 'Accounting-Request',
@@ -600,7 +602,7 @@ module.exports = testCase({
         ['NAS-Identifier', 'ap6532-70D5A4'],
         ['NAS-Port-Id', 'radio2'],
         ['Event-Timestamp', new Date(epoch * 1000)],
-        ['Tunnel-Type', 0x00, 'VLAN' ],
+        ['Tunnel-Type', 0x00, 'VLAN'],
         ['Tunnel-Medium-Type', 0x00, 'IEEE-802'],
         ['Tunnel-Private-Group-Id', '30'],
         ['Acct-Authentic', 'RADIUS']
@@ -608,14 +610,14 @@ module.exports = testCase({
       secret: secret
     });
 
-    test.equal( encoded.toString('hex'), raw_packet.toString('hex') );
+    test.equal(encoded.toString('hex'), raw_packet.toString('hex'));
 
     test.done();
   },
 
-  test_date_type_non_mult_1000_ms: function(test) {
+  test_date_type_non_mult_1000_ms: function (test) {
     var encoded;
-    test.doesNotThrow(function() {
+    test.doesNotThrow(function () {
       encoded = radius.encode({
         code: 'Accounting-Request',
         identifier: 123,
@@ -628,12 +630,12 @@ module.exports = testCase({
 
     // truncates ms
     var decoded = radius.decode({ packet: encoded, secret: secret });
-    test.equal( decoded.attributes['Event-Timestamp'].getTime(), 1403025894000 );
+    test.equal(decoded.attributes['Event-Timestamp'].getTime(), 1403025894000);
 
     test.done();
   },
 
-  test_disconnect_request: function(test) {
+  test_disconnect_request: function (test) {
     var encoded = radius.encode({
       code: 'Disconnect-Request',
       identifier: 54,
@@ -655,10 +657,10 @@ module.exports = testCase({
     hasher.update(secret);
     expected_authenticator.write(hasher.digest("binary"), 0, 16, "binary");
 
-    test.equal( got_authenticator.toString('hex'), expected_authenticator.toString('hex') );
+    test.equal(got_authenticator.toString('hex'), expected_authenticator.toString('hex'));
 
     // and make sure we check the authenticator when decoding
-    test.throws(function() {
+    test.throws(function () {
       radius.decode({
         packet: encoded,
         secret: secret
@@ -666,7 +668,7 @@ module.exports = testCase({
     });
 
     expected_authenticator.copy(encoded, 4, 0);
-    test.doesNotThrow(function() {
+    test.doesNotThrow(function () {
       radius.decode({
         packet: encoded,
         secret: secret
@@ -676,13 +678,13 @@ module.exports = testCase({
     test.done();
   },
 
-  test_verify_response: function(test) {
+  test_verify_response: function (test) {
     var request = radius.encode({
       secret: secret,
       code: 'Accounting-Request',
       attributes: {
         'User-Name': '00-1F-3B-8C-3A-15',
-        'Acct-Status-Type':  'Start'
+        'Acct-Status-Type': 'Start'
       }
     });
 
@@ -692,17 +694,17 @@ module.exports = testCase({
       packet: radius.decode({ packet: request, secret: secret })
     });
 
-    test.ok( radius.verify_response({
+    test.ok(radius.verify_response({
       request: request,
       response: response,
       secret: secret
-    }) );
+    }));
 
-    test.ok( !radius.verify_response({
+    test.ok(!radius.verify_response({
       request: request,
       response: response,
       secret: "Calliopsis-misbeholden"
-    }) );
+    }));
 
     // response encoded with wrong secret
     response = radius.encode_response({
@@ -710,16 +712,16 @@ module.exports = testCase({
       code: 'Accounting-Response',
       packet: radius.decode({ packet: request, secret: secret })
     });
-    test.ok( !radius.verify_response({
+    test.ok(!radius.verify_response({
       request: request,
       response: response,
       secret: secret
-    }) );
+    }));
 
     test.done();
   },
 
-  test_server_request: function(test) {
+  test_server_request: function (test) {
     var encoded1 = radius.encode({
       code: 'Status-Server',
       identifier: 54,
@@ -745,24 +747,24 @@ module.exports = testCase({
     var got_authenticator2 = new Buffer(16);
     encoded2.copy(got_authenticator2, 0, 4);
 
-    test.notEqual( got_authenticator1.toString(), got_authenticator2.toString() );
+    test.notEqual(got_authenticator1.toString(), got_authenticator2.toString());
 
     var response = radius.encode_response({
       code: 'Access-Accept',
       secret: secret,
-      packet: radius.decode({packet: encoded1, secret: secret})
+      packet: radius.decode({ packet: encoded1, secret: secret })
     });
 
-    test.ok( radius.verify_response({
+    test.ok(radius.verify_response({
       request: encoded1,
       response: response,
       secret: secret
-    }) );
+    }));
 
     test.done();
   },
 
-  test_vendor_names_with_numbers: function(test) {
+  test_vendor_names_with_numbers: function (test) {
     radius.load_dictionary(__dirname + '/dictionaries/dictionary.number_vendor_name');
 
     var encoded = radius.encode({
@@ -783,22 +785,22 @@ module.exports = testCase({
       secret: secret
     });
 
-    test.equal( radius.vendor_name_to_id('123Foo'), 995486 );
+    test.equal(radius.vendor_name_to_id('123Foo'), 995486);
 
-    test.deepEqual( decoded.attributes, {
+    test.deepEqual(decoded.attributes, {
       'Vendor-Specific': {
         '1Integer': 478,
         'vendors': { '995486': '995486' },
         '1String': 'Zollernia-fibrovasal',
         '12345': 'myrmecophagoid-harn'
       }
-    } );
+    });
 
     test.done();
   },
 
   message_authenticator_group: {
-    setUp: function(cb) {
+    setUp: function (cb) {
       secret = "testing123";
 
       test_args = {
@@ -812,8 +814,8 @@ module.exports = testCase({
     },
 
     // make sure we calculate the same Message-Authenticator
-    test_calculate: function(test) {
-      var attrs_without_ma = test_args.parsed_request.raw_attributes.filter(function(a) {
+    test_calculate: function (test) {
+      var attrs_without_ma = test_args.parsed_request.raw_attributes.filter(function (a) {
         return a[0] != radius.attr_name_to_id('Message-Authenticator');
       });
 
@@ -825,13 +827,13 @@ module.exports = testCase({
         secret: secret
       });
 
-      test.equal( encoded.toString('hex'), test_args.raw_request.toString('hex') );
+      test.equal(encoded.toString('hex'), test_args.raw_request.toString('hex'));
 
       test.done();
     },
 
     // encode_response should calculate the appropriate Message-Authenticator
-    test_encode_response: function(test) {
+    test_encode_response: function (test) {
       var response = radius.encode_response({
         code: "Access-Accept",
         secret: secret,
@@ -858,11 +860,11 @@ module.exports = testCase({
 
       // expected_response's authenticator is correct, but Message-Authenticator is wrong
       // (it's all 0s). make sure verify_response checks both
-      test.ok( !radius.verify_response({
+      test.ok(!radius.verify_response({
         request: test_args.raw_request,
         response: expected_response,
         secret: secret
-      }) );
+      }));
 
       // put back the request's authenticator
       test_args.parsed_request.authenticator.copy(expected_response, 4);
@@ -873,17 +875,17 @@ module.exports = testCase({
         expected_ma.toString("hex")
       );
 
-      test.ok( radius.verify_response({
+      test.ok(radius.verify_response({
         request: test_args.raw_request,
         response: response,
         secret: secret
-      }) );
+      }));
 
       test.done();
     },
 
     // response is missing Message-Authenticator, not okay
-    test_response_missing_ma: function(test) {
+    test_response_missing_ma: function (test) {
       var bad_response = radius.encode({
         code: "Access-Accept",
         identifier: test_args.parsed_request.identifier,
@@ -892,18 +894,18 @@ module.exports = testCase({
         secret: secret
       });
 
-      test.ok( !radius.verify_response({
+      test.ok(!radius.verify_response({
         request: test_args.raw_request,
         response: bad_response,
         secret: secret
-      }) );
+      }));
 
       test.done();
     },
 
     // make sure we verify Message-Authenticator when decoding requests
-    test_decode_verify: function(test) {
-      test.throws(function() {
+    test_decode_verify: function (test) {
+      test.throws(function () {
         radius.decode({
           packet: test_args.raw_request,
           secret: 'wrong secret'
@@ -914,7 +916,7 @@ module.exports = testCase({
     }
   },
 
-  test_utf8_strings: function(test) {
+  test_utf8_strings: function (test) {
     var encoded = radius.encode({
       secret: "密码",
       code: "Access-Request",
@@ -929,33 +931,111 @@ module.exports = testCase({
       secret: "密码"
     });
 
-    test.deepEqual( {
+    test.deepEqual({
       "User-Name": "金庸先生",
       "User-Password": "降龙十八掌"
-    }, decoded.attributes );
+    }, decoded.attributes);
 
     test.done();
   },
 
-  test_invalid_packet_attribute_length: function(test) {
-    var invalid_packet  = fs.readFileSync(__dirname + '/captures/invalid_register.packet');
-    var raw_packet      = fs.readFileSync(__dirname + '/captures/aruba_mac_auth.packet');
+  test_invalid_packet_attribute_length: function (test) {
+    var invalid_packet = fs.readFileSync(__dirname + '/captures/invalid_register.packet');
+    var raw_packet = fs.readFileSync(__dirname + '/captures/aruba_mac_auth.packet');
 
     // should fail decode packet attributes
-    test.throws(function() {
+    test.throws(function () {
       radius.decode_without_secret({ packet: invalid_packet });
-    } );
+    });
 
     // should decode packet attributes
-    test.doesNotThrow(function() {
+    test.doesNotThrow(function () {
       radius.decode_without_secret({ packet: raw_packet });
     });
 
     test.done();
   },
-  test_lookup_attribute_code: function(test) {
+  test_lookup_attribute_code: function (test) {
     radius.load_dictionaries();
     test.equal(radius.lookup_attribute_code(1, null), 'User-Name');
     test.done();
   },
+  test_attribute_info_map: function (test) {
+    radius.load_dictionaries();
+    var map = radius.attribute_info_map(["1", "2", "3"]);
+    test.equal(_.size(map), 3);
+    test.equal(map["1"].name, "User-Name");
+
+    var p = {
+      "1": "MDgtZWQtYjktYmItY2EtMDg=",
+      "2": "MDgtZWQtYjktYmItY2EtMDgAAAAAAAAAAAAAAAAAAAA=",
+      "4": "CgoKCg==",
+      "5": "AAAChQ==",
+      "26": "AAAACQErYXVkaXQtc2Vzc2lvbi1pZD04NTAwMjdkOTAwMDAwMDhkYzkwZGE3NTk=",
+      "30": "SEhVSy1TRk9GSC1QVy1BUDAx",
+      "31": "MDgtZWQtYjktYmItY2EtMDg=",
+      "32": "UEstMjEwLTIx",
+      "44": "NTlmY2FiY2MvMTA6MGI6YTk6NmQ6Njc6NjAvNzIyMTky",
+      // "263": "AAAAIg==",
+      // "264": "VdsSWeEOrk+cfOOKmVsTUA==",
+      // "265": "Cgscdg==",
+      // "266": "AAAN3Q==",
+      // "271": "AAAAAg=="
+    };
+    map = radius.attribute_info_map(_.keys(p));
+    console.log(map);
+    test.equal(_.size(p), _.size(map));
+
+    test.done();
+  },
+
+  test_base64MapToBuffer: function (test) {
+    radius.load_dictionaries();
+    
+    var map = {
+      "1": "MDgtZWQtYjktYmItY2EtMDg=",
+      "2": "MDgtZWQtYjktYmItY2EtMDgAAAAAAAAAAAAAAAAAAAA=",
+      "4": "CgoKCg==",
+      "5": "AAAChQ==",
+      "26": "AAAACQErYXVkaXQtc2Vzc2lvbi1pZD04NTAwMjdkOTAwMDAwMDhkYzkwZGE3NTk=",
+      "30": "SEhVSy1TRk9GSC1QVy1BUDAx",
+      "31": "MDgtZWQtYjktYmItY2EtMDg=",
+      "32": "UEstMjEwLTIx",
+      "44": "NTlmY2FiY2MvMTA6MGI6YTk6NmQ6Njc6NjAvNzIyMTky",
+      "263": "AAAAIg==",
+      "264": "VdsSWeEOrk+cfOOKmVsTUA==",
+      "265": "Cgscdg==",
+      "266": "AAAN3Q==",
+      "271": "AAAAAg=="
+    };
+    var result = util.base64MapToBuffer(map);
+    test.equal(_.size(result), _.size(map));
+    test.done();
+  },
+  test_decodeBufferMap: function (test) {
+    radius.load_dictionaries();
+    
+    var map = {
+      "1": "MDgtZWQtYjktYmItY2EtMDg=",
+      "2": "MDgtZWQtYjktYmItY2EtMDgAAAAAAAAAAAAAAAAAAAA=",
+      "4": "CgoKCg==",
+      "5": "AAAChQ==",
+      "26": "AAAACQErYXVkaXQtc2Vzc2lvbi1pZD04NTAwMjdkOTAwMDAwMDhkYzkwZGE3NTk=",
+      "30": "SEhVSy1TRk9GSC1QVy1BUDAx",
+      "31": "MDgtZWQtYjktYmItY2EtMDg=",
+      "32": "UEstMjEwLTIx",
+      "44": "NTlmY2FiY2MvMTA6MGI6YTk6NmQ6Njc6NjAvNzIyMTky",
+      // "263": "AAAAIg==",
+      // "264": "VdsSWeEOrk+cfOOKmVsTUA==",
+      // "265": "Cgscdg==",
+      // "266": "AAAN3Q==",
+      // "271": "AAAAAg=="
+    };
+    var bufferMap = util.base64MapToBuffer(map);
+    result = util.decodeBufferMap(bufferMap);
+    console.log(JSON.stringify(result));
+    test.done();
+  },
+
+
 });
