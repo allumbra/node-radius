@@ -964,6 +964,7 @@ module.exports = testCase({
     radius.load_dictionaries();
     var map = radius.attribute_info_map(["1", "2", "3"]);
     test.equal(_.size(map), 3);
+    console.log(map);
     test.equal(map["1"].name, "User-Name");
 
     var p = {
@@ -983,7 +984,6 @@ module.exports = testCase({
       // "271": "AAAAAg=="
     };
     map = radius.attribute_info_map(_.keys(p));
-    console.log(map);
     test.equal(_.size(p), _.size(map));
 
     test.done();
@@ -991,7 +991,7 @@ module.exports = testCase({
 
   test_base64MapToBuffer: function (test) {
     radius.load_dictionaries();
-    
+
     var map = {
       "1": "MDgtZWQtYjktYmItY2EtMDg=",
       "2": "MDgtZWQtYjktYmItY2EtMDgAAAAAAAAAAAAAAAAAAAA=",
@@ -1014,7 +1014,7 @@ module.exports = testCase({
   },
   test_decodeBufferMap: function (test) {
     radius.load_dictionaries();
-    
+
     var map = {
       "1": "MDgtZWQtYjktYmItY2EtMDg=",
       "2": "MDgtZWQtYjktYmItY2EtMDgAAAAAAAAAAAAAAAAAAAA=",
@@ -1033,9 +1033,33 @@ module.exports = testCase({
     };
     var bufferMap = util.base64MapToBuffer(map);
     result = util.decodeBufferMap(bufferMap);
-    console.log(JSON.stringify(result));
     test.done();
   },
+  test_decodeNpsRadius: function (test) {
+    radius.load_dictionaries();
+    var nps = {
+      "requestCode": "1",
+      "request": {
+        "1": "MDgtZWQtYjktYmItY2EtMDg=",
+        "2": "MDgtZWQtYjktYmItY2EtMDgAAAAAAAAAAAAAAAAAAAA=",
+        "4": "CgoKCg==",
+        "5": "AAAChQ==",
+        "26": "AAAACQErYXVkaXQtc2Vzc2lvbi1pZD04NTAwMjdkOTAwMDAwMDhkYzkwZGE3NTk=",
+        "30": "SEhVSy1TRk9GSC1QVy1BUDAx",
+        "31": "MDgtZWQtYjktYmItY2EtMDg=",
+        "32": "UEstMjEwLTIx",
+        "44": "NTlmY2FiY2MvMTA6MGI6YTk6NmQ6Njc6NjAvNzIyMTky",
+        "263": "AAAAIg==",
+        "264": "VdsSWeEOrk+cfOOKmVsTUA==",
+        "265": "Cgscdg==",
+        "266": "AAAN3Q==",
+        "271": "AAAAAg=="
+      }
+    }
+    var result = util.decodeNpsRadius(nps);
+    console.log(result);
+    test.done();
+  }
 
 
 });
