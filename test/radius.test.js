@@ -3,7 +3,7 @@ var radius = require('../lib/radius');
 var fs = require('fs');
 var crypto = require('crypto');
 var _ = require('lodash');
-var util = require('../lib/util');
+// var util = require('../lib/util');
 
 var secret;
 
@@ -1008,7 +1008,7 @@ module.exports = testCase({
       "266": "AAAN3Q==",
       "271": "AAAAAg=="
     };
-    var result = util.base64MapToBuffer(map);
+    var result = radius.base64MapToBuffer(map);
     test.equal(_.size(result), _.size(map));
     test.done();
   },
@@ -1031,8 +1031,10 @@ module.exports = testCase({
       // "266": "AAAN3Q==",
       // "271": "AAAAAg=="
     };
-    var bufferMap = util.base64MapToBuffer(map);
-    result = util.decodeBufferMap(bufferMap);
+    var bufferMap = radius.base64MapToBuffer(map);
+    result = radius.decodeBufferMap(bufferMap);
+
+    map = 
     test.done();
   },
   test_decodeNpsRadius: function (test) {
@@ -1056,8 +1058,45 @@ module.exports = testCase({
         "271": "AAAAAg=="
       }
     }
-    var result = util.decodeNpsRadius(nps);
+    var result = radius.decodeNpsRadius(nps);
     console.log(result);
+
+    var interim = {
+      "requestCode": "4",
+      "responseCode": "5",
+      "request": {
+        "1": "eXAtNjgwLTExL2dnLTA0NDI=",
+        "4": "YAoCYw==",
+        "5": "AAAD6A==",
+        "40": "AAAAAw==",
+        "44": "MzgwMTEyNjk=",
+        "43": "AJd6hw==",
+        "42": "HEiezQ==",
+        "48": "AAH6FQ==",
+        "47": "AATuiQ==",
+        "27": "AE8evw==",
+        "28": "AAA4QA==",
+        "55": "pzP2Wg==",
+        "25": "TJsE5QAAATcAAQIACgB0OAAAAAAAAAAAAAAAAAHT6U2RGtkZAAAAAAAAHi4=",
+        "26": "AAA3KgEZaXNvY2M9LGNjPSxhYz0sbmV0d29yaz0=",
+        "30": "MDAtNTAtRTgtMDItQzItNUE=",
+        "31": "RTAtNUYtNDUtMkEtQUUtQTQ=",
+        "46": "AACX6g==",
+        "32": "c3ByaW5naGlsbF9jYXJ5",
+        "8": "rBQBew==",
+        "41": "AAAAAA==",
+        "265": "YAoCYw==",
+        "266": "AAAVBw==",
+        "263": "AAAAdg==",
+        "264": "oJyqShJQVw2jd8QOlSoYgQ==",
+        "271": "AE+AhA=="
+      },
+      "response": {
+        
+      }
+     }
+     var result = radius.decodeNpsRadius(interim);
+     console.log(result); 
     test.done();
   }
 
