@@ -1065,36 +1065,27 @@ module.exports = testCase({
       "requestCode": "4",
       "responseCode": "5",
       "request": {
-        "1": "eXAtNjgwLTExL2dnLTA0NDI=",
-        "4": "YAoCYw==",
+        "1": "YnEtMjg3LTQ4L3VoLTg5MDQ=",
+        "4": "Slfogw==",
         "5": "AAAD6A==",
-        "40": "AAAAAw==",
-        "44": "MzgwMTEyNjk=",
-        "43": "AJd6hw==",
-        "42": "HEiezQ==",
-        "48": "AAH6FQ==",
-        "47": "AATuiQ==",
-        "27": "AE8evw==",
-        "28": "AAA4QA==",
-        "55": "pzP2Wg==",
-        "25": "TJsE5QAAATcAAQIACgB0OAAAAAAAAAAAAAAAAAHT6U2RGtkZAAAAAAAAHi4=",
+        "8": "CoADZQ==",
+        "25": "TLAE7wAAATcAAQIACgB0OAAAAAAAAAAAAAAAAAHT6U2RGtkZAAAAAAAEITE=",
         "26": "AAA3KgEZaXNvY2M9LGNjPSxhYz0sbmV0d29yaz0=",
-        "30": "MDAtNTAtRTgtMDItQzItNUE=",
-        "31": "RTAtNUYtNDUtMkEtQUUtQTQ=",
-        "46": "AACX6g==",
-        "32": "c3ByaW5naGlsbF9jYXJ5",
-        "8": "rBQBew==",
-        "41": "AAAAAA==",
-        "265": "YAoCYw==",
+        "28": "AAAHCA==",
+        "30": "MDAtNTAtRTgtMDQtMDAtQjQ=",
+        "31": "REMtQTktMDQtQkYtOTktNEY=",
+        "32": "UkxQRkFMTFM=",
+        "40": "AAAAAQ==",
+        "41": "AAAAAQ==",
+        "44": "MDcwMEU4QUQ=",
+        "55": "n1r3Wg==",
+        "263": "AAAAWA==",
+        "264": "gBb48jWnTQcCecKu5yZsGw==",
+        "265": "Slfogw==",
         "266": "AAAVBw==",
-        "263": "AAAAdg==",
-        "264": "oJyqShJQVw2jd8QOlSoYgQ==",
-        "271": "AE+AhA=="
-      },
-      "response": {
-        
+        "271": "AE9/5A=="
       }
-     }
+    }
      var result = radius.decodeNpsRadius(interim);
      console.log(result); 
     test.done();
